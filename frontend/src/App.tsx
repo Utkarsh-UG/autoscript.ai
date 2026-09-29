@@ -25,16 +25,42 @@ import {
   X,
   Zap,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { Button } from './components/ui/Button'
 import { Card } from './components/ui/Card'
 import { Input } from './components/ui/Input'
 import { AIStreamingText } from './components/ai/AIStreamingText'
+import { AutoScriptLogo } from './components/brand/AutoScriptLogo'
 import { fetchHealth } from './services/health'
 import type { HealthResponse } from './services/health'
+import {
+  AuthPage,
+  GeneratePage,
+  HelpPage,
+  HistoryPage,
+  ProjectsPage,
+  ReportsPage,
+  RunTestsPage,
+  SettingsPage,
+  TestCasesPage,
+} from './pages/WorkspacePages'
 
 type ConnectionState = 'loading' | 'connected' | 'disconnected'
 type ThemeMode = 'light' | 'dark'
 type NavItem = { label: string; icon: typeof LayoutDashboard }
+type RouteDefinition = { path: string; label: string }
+
+const temporaryUser = {
+  name: 'User',
+  initials: 'U',
+}
+
+const dashboardMetrics = [
+  { label: 'Tests Generated', value: '248', change: '+12% this month', icon: TestTube2 },
+  { label: 'Tests Executed', value: '1,284', change: '+8% this month', icon: Play },
+  { label: 'Pass Rate', value: '96.4%', change: '+2.1% this month', icon: BarChart3 },
+  { label: 'Failed Tests', value: '42', change: '-5% this month', icon: FlaskConical, negative: true },
+]
 
 const THEME_STORAGE_KEY = 'autoscript-ai-theme'
 
@@ -54,6 +80,26 @@ const utilityItems: NavItem[] = [
   { label: 'Help', icon: HelpCircle },
 ]
 
+const routes: RouteDefinition[] = [
+  { path: '/login', label: 'Sign In' },
+  { path: '/signup', label: 'Sign Up' },
+  { path: '/forgot-password', label: 'Forgot Password' },
+  { path: '/dashboard', label: 'Dashboard' },
+  { path: '/generate', label: 'Generate Test' },
+  { path: '/run-tests', label: 'Run Tests' },
+  { path: '/projects', label: 'Projects' },
+  { path: '/test-cases', label: 'Test Cases' },
+  { path: '/reports', label: 'Reports' },
+  { path: '/history', label: 'History' },
+  { path: '/ai-assistant', label: 'AI Assistant' },
+  { path: '/settings', label: 'Settings' },
+  { path: '/help', label: 'Help' },
+]
+
+function routeForPath(pathname: string): RouteDefinition {
+  return routes.find((route) => route.path === pathname) ?? routes[0]
+}
+
 function App() {
   const [theme, setTheme] = useState<ThemeMode>(() => {
     const saved = window.localStorage.getItem(THEME_STORAGE_KEY)
@@ -62,7 +108,7 @@ function App() {
   const [collapsed, setCollapsed] = useState(false)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [assistantOpen, setAssistantOpen] = useState(false)
-  const [activePage, setActivePage] = useState('Dashboard')
+  const [activeRoute, setActiveRoute] = useState<RouteDefinition>(() => routeForPath(window.location.pathname))
   const [connectionState, setConnectionState] = useState<ConnectionState>('loading')
   const [health, setHealth] = useState<HealthResponse | null>(null)
 
@@ -87,9 +133,44 @@ function App() {
     }
   }, [])
 
+  useEffect(() => {
+    const handlePopState = () => setActiveRoute(routeForPath(window.location.pathname))
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+
   const selectPage = (label: string) => {
-    setActivePage(label)
+    const route = routes.find((item) => item.label === label) ?? routes[0]
+    window.history.pushState({}, '', route.path)
+    setActiveRoute(route)
     setMobileNavOpen(false)
+  }
+
+  const renderRoute = () => {
+    const pageProps = { onNavigate: selectPage }
+    switch (activeRoute.path) {
+      case '/generate': return <GeneratePage {...pageProps} />
+      case '/run-tests': return <RunTestsPage />
+      case '/projects': return <ProjectsPage />
+      case '/test-cases': return <TestCasesPage />
+      case '/reports': return <ReportsPage />
+      case '/history': return <HistoryPage />
+      case '/settings': return <SettingsPage />
+      case '/help': return <HelpPage />
+      case '/login': return <AuthPage mode="login" />
+      case '/signup': return <AuthPage mode="signup" />
+      case '/forgot-password': return <AuthPage mode="forgot" />
+      case '/dashboard':
+      default:
+        return <Dashboard
+          connectionState={connectionState}
+          health={health}
+          onGenerate={() => selectPage('Generate Test')}
+          onOpenAssistant={() => setAssistantOpen(true)}
+          userName={temporaryUser.name}
+          metrics={dashboardMetrics}
+        />
+    }
   }
 
   return (
@@ -101,7 +182,7 @@ function App() {
       />
       <aside className={`sidebar ${collapsed ? 'is-collapsed' : ''} ${mobileNavOpen ? 'is-mobile-open' : ''}`}>
         <div className="sidebar-brand">
-          <div className="brand-mark">A</div>
+          <AutoScriptLogo variant="mark" />
           <div className="brand-copy">
             <strong>AutoScript AI</strong>
             <span>Generate. Execute. Analyze.</span>
@@ -114,7 +195,7 @@ function App() {
             <NavigationItem
               key={item.label}
               item={item}
-              active={activePage === item.label}
+              active={activeRoute.label === item.label}
               collapsed={collapsed}
               onClick={() => selectPage(item.label)}
             />
@@ -124,9 +205,12 @@ function App() {
             <NavigationItem
               key={item.label}
               item={item}
-              active={activePage === item.label}
+              active={activeRoute.label === item.label}
               collapsed={collapsed}
-              onClick={() => item.label === 'AI Assistant' ? setAssistantOpen(true) : selectPage(item.label)}
+              onClick={() => {
+                selectPage(item.label)
+                if (item.label === 'AI Assistant') setAssistantOpen(true)
+              }}
             />
           ))}
         </nav>
@@ -159,7 +243,7 @@ function App() {
             </button>
             <div>
               <span className="breadcrumb">Workspace /</span>
-              <strong className="page-title">{activePage}</strong>
+              <strong className="page-title">{activeRoute.label}</strong>
             </div>
           </div>
           <div className="topbar-center">
@@ -178,7 +262,7 @@ function App() {
               className={`icon-button theme-toggle ${theme}`}
               aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
               data-tooltip={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
-              onClick={() => setTheme((value) => value === 'light' ? 'dark' : 'light')}
+                onClick={() => setTheme((value) => value === 'light' ? 'dark' : 'light')}
             >
               <span className="theme-icon sun-icon"><Sun size={18} /></span>
               <span className="theme-icon moon-icon"><Moon size={18} /></span>
@@ -188,19 +272,14 @@ function App() {
               <span className="notification-dot" />
             </button>
             <button className="profile-button" aria-label="Open profile">
-              <span>AS</span>
-              <span className="profile-name">Alex Smith</span>
+              <span>{temporaryUser.initials}</span>
+              <span className="profile-name">{temporaryUser.name}</span>
             </button>
           </div>
         </header>
 
         <main className="main-content">
-          <Dashboard
-            connectionState={connectionState}
-            health={health}
-            onGenerate={() => selectPage('Generate Test')}
-            onOpenAssistant={() => setAssistantOpen(true)}
-          />
+          {renderRoute()}
         </main>
       </div>
 
@@ -224,24 +303,28 @@ function NavigationItem({ item, active, collapsed, onClick }: { item: NavItem; a
   )
 }
 
-function Dashboard({ connectionState, health, onGenerate, onOpenAssistant }: {
+function Dashboard({ connectionState, health, onGenerate, onOpenAssistant, userName, metrics }: {
   connectionState: ConnectionState
   health: HealthResponse | null
   onGenerate: () => void
   onOpenAssistant: () => void
+  userName: string
+  metrics: Array<{ icon: LucideIcon; label: string; value: string; change: string; negative?: boolean }>
 }) {
+  const [advancedOpen, setAdvancedOpen] = useState(false)
+  const [scenario, setScenario] = useState('Login to the application, search for a laptop, add it to the cart, remove it, and verify that the cart is empty.')
   const backendStatus = connectionState === 'connected' ? 'Operational' : connectionState === 'loading' ? 'Checking' : 'Unavailable'
   return (
     <div className="dashboard-page">
       <section className="dashboard-heading">
         <div>
           <span className="eyebrow">Wednesday, September 30, 2026</span>
-          <h1>Good morning, Alex</h1>
+          <h1>Good morning, {userName}</h1>
           <p>Here&apos;s what&apos;s happening with your tests today.</p>
         </div>
         <button className="connection-badge" onClick={onOpenAssistant}>
           <span className={`status-dot ${connectionState}`} />
-          {connectionState === 'connected' ? 'All systems operational' : `Backend ${backendStatus.toLowerCase()}`}
+          {connectionState === 'connected' ? 'Backend API • Operational' : `Backend API • ${backendStatus}`}
         </button>
       </section>
 
@@ -264,10 +347,10 @@ function Dashboard({ connectionState, health, onGenerate, onOpenAssistant }: {
       </section>
 
       <section className="stats-grid" aria-label="Automation statistics">
-        <MetricCard icon={<TestTube2 size={18} />} label="Tests Generated" value="248" change="+12% this month" />
-        <MetricCard icon={<Play size={18} />} label="Tests Executed" value="1,284" change="+8% this month" />
-        <MetricCard icon={<BarChart3 size={18} />} label="Pass Rate" value="96.4%" change="+2.1% this month" />
-        <MetricCard icon={<FlaskConical size={18} />} label="Failed Tests" value="42" change="-5% this month" negative />
+        {metrics.map((metric) => {
+          const Icon = metric.icon
+          return <MetricCard key={metric.label} icon={<Icon size={18} />} label={metric.label} value={metric.value} change={metric.change} negative={metric.negative} />
+        })}
       </section>
 
       <section className="dashboard-grid">
@@ -277,7 +360,9 @@ function Dashboard({ connectionState, health, onGenerate, onOpenAssistant }: {
               <span className="eyebrow">Start building</span>
               <h2>Scenario Builder</h2>
             </div>
-            <Button variant="ghost">Advanced</Button>
+            <Button variant="ghost" onClick={() => setAdvancedOpen((value) => !value)} aria-expanded={advancedOpen}>
+              Advanced {advancedOpen ? '−' : '+'}
+            </Button>
           </div>
           <div className="field-stack">
             <label className="ui-input-field">
@@ -285,13 +370,18 @@ function Dashboard({ connectionState, health, onGenerate, onOpenAssistant }: {
               <textarea
                 className="ui-textarea"
                 placeholder="Describe your test scenario in natural language..."
-                defaultValue="Login to the application, search for a laptop, add it to the cart, remove it, and verify that the cart is empty."
+                value={scenario}
+                onChange={(event) => setScenario(event.target.value)}
               />
-              <span className="character-count">143 / 2,000</span>
+              <span className="character-count">{scenario.length} / 2,000</span>
             </label>
             <div className="two-column-fields">
               <Input label="Application URL (optional)" placeholder="https://example.com" />
               <Input label="Project" defaultValue="E-Commerce QA" />
+            </div>
+            <div className={`advanced-fields ${advancedOpen ? 'is-open' : ''}`} aria-hidden={!advancedOpen}>
+              <Input label="Test variables (optional)" placeholder="USERNAME=${USERNAME}" />
+              <Input label="Framework" defaultValue="Playwright" readOnly />
             </div>
           </div>
           <div className="cta-row">
