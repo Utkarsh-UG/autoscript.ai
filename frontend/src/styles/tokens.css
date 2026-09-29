@@ -1,0 +1,100 @@
+:root {
+  color-scheme: light;
+  --background: #f4f7fb;
+  --sidebar-bg: #fbfcff;
+  --topbar-bg: rgba(244, 247, 251, 0.86);
+  --hero-start: #eef1ff;
+  --hero-end: #f8f4ff;
+  --background-elevated: #eef3ff;
+  --surface: rgba(255, 255, 255, 0.82);
+  --surface-strong: #ffffff;
+  --surface-soft: #f8faff;
+  --surface-muted: #edf3ff;
+  --border: rgba(148, 163, 184, 0.28);
+  --border-strong: rgba(99, 102, 241, 0.2);
+  --text-primary: #111827;
+  --text-secondary: #5b6475;
+  --text-muted: #7a8699;
+  --accent: #4f46e5;
+  --accent-strong: #4338ca;
+  --accent-soft: rgba(79, 70, 229, 0.12);
+  --accent-warm: #8b5cf6;
+  --success: #18a957;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --shadow-soft: 0 16px 36px rgba(15, 23, 42, 0.08);
+  --shadow-card: 0 10px 25px rgba(148, 163, 184, 0.12);
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --font-sans: Inter, "Segoe UI", sans-serif;
+  --transition-base: 180ms ease;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --background: #0b0b0c;
+  --sidebar-bg: #101011;
+  --topbar-bg: rgba(11, 11, 12, 0.86);
+  --hero-start: #18181b;
+  --hero-end: #171521;
+  --background-elevated: #151516;
+  --surface: rgba(24, 24, 26, 0.92);
+  --surface-strong: #19191b;
+  --surface-soft: #141415;
+  --surface-muted: #222224;
+  --border: rgba(190, 190, 198, 0.16);
+  --border-strong: rgba(160, 160, 170, 0.34);
+  --text-primary: #f2f2f3;
+  --text-secondary: #b4b4b8;
+  --text-muted: #858589;
+  --accent: #8b8cff;
+  --accent-strong: #a2a3ff;
+  --accent-soft: rgba(139, 140, 255, 0.16);
+  --accent-warm: #a78bfa;
+  --success: #3dcc81;
+  --warning: #fbbf24;
+  --error: #f87171;
+  --shadow-soft: 0 22px 48px rgba(0, 0, 0, 0.42);
+  --shadow-card: 0 10px 26px rgba(0, 0, 0, 0.3);
+}
+
+html {
+  background: var(--background);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(99, 102, 241, 0.08), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(167, 139, 250, 0.08), transparent 25%),
+    var(--background);
+  color: var(--text-primary);
+  transition: background-color var(--transition-base), color var(--transition-base);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button, input, textarea, select {
+  font: inherit;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+button {
+  cursor: pointer;
+}
+
+::selection {
+  background: rgba(99, 102, 241, 0.2);
+}
